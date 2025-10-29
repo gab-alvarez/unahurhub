@@ -1,0 +1,47 @@
+services:
+  jupyterhub:
+    build: .
+    container_name: baseDeDatosOAuthLocalLocalHost
+    ports:
+      - "8890:8000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "baseDeDatosOAuthLocal-db:/data"
+    restart: always
+    networks:
+      - baseDeDatosOAuthLocal-network
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15
+    container_name: baseDeDatosOAuthLocal-db
+    restart: always
+    ports:
+      - "54320:5432"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - "postgres_data:/var/lib/postgresql/data"
+    networks:
+      - baseDeDatosOAuthLocal-network
+
+networks:
+  baseDeDatosOAuthLocal-network:
+    name: baseDeDatosOAuthLocal-network
+
+volumes:
+  baseDeDatosOAuthLocal-db:
+  postgres_data:
